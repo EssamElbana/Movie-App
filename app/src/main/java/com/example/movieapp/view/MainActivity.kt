@@ -3,46 +3,83 @@ package com.example.movieapp.view
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.movieapp.R
+import com.example.movieapp.model.Movie
 import com.example.movieapp.repository.Repository
-import kotlinx.coroutines.*
+import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), MoviesContract.View {
+    private val presenter by lazy {
+        Presenter(Repository)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        presenter.setView(this)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        getMovies()
-    }
-
-    private fun getMovies() {
+        val movieAdapter =
+            MovieAdapter(onItemClicked = {
+                presenter.onMovieSelected(it)
+            })
+        rvMovies.layoutManager = GridLayoutManager(this@MainActivity, 2)
+        rvMovies.addItemDecoration(
+            DividerItemDecoration(
+                this@MainActivity,
+                LinearLayoutManager.VERTICAL
+            )
+        )
+        rvMovies.adapter = movieAdapter
         GlobalScope.launch(Dispatchers.Main) {
-            val movieList = withContext(Dispatchers.IO) {
-                Repository.getMoviesList()
-            }
-            if (movieList.isEmpty())
-                Toast.makeText(
-                    this@MainActivity,
-                    "Failed to retrieve popular movies!",
-                    Toast.LENGTH_SHORT
-                ).show()
-            else {
-                val movieAdapter =
-                    MovieAdapter(movieList)
-                val recyclerView: RecyclerView = findViewById(R.id.rvMovies)
-                recyclerView.layoutManager = GridLayoutManager(this@MainActivity, 2)
-                recyclerView.addItemDecoration(
-                    DividerItemDecoration(
-                        this@MainActivity,
-                        LinearLayoutManager.VERTICAL
-                    )
-                )
-                recyclerView.adapter = movieAdapter
+            withContext(Dispatchers.IO) {
+                presenter.onViewCreated()
             }
         }
+    }
+
+    override fun showMovieDetails(movie: Movie) {
+        val fragmentManager: FragmentManager = supportFragmentManager
+        MovieDetailsDialog().apply {
+            initMovie(movie)
+        }.show(fragmentManager, "MOVIE DETAILS DIALOG")
+    }
+
+    override fun showError(message: String) {
+        GlobalScope.launch {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(
+                    this@MainActivity,
+                    message,
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+
+    override fun showMovieList(movies: List<Movie>) {
+        GlobalScope.launch {
+            withContext(Dispatchers.Main) {
+
+                val adapter = rvMovies.adapter as MovieAdapter
+                adapter.setDataSet(movies)
+            }
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        presenter.onViewDestroyed()
     }
 }
