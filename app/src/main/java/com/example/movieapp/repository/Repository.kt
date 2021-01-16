@@ -15,4 +15,5 @@ object Repository : IRepository {
 
     override fun loadMovies(): List<Movie> = inMemoryCache.loadData(moviesListKey)
 
+    override fun saveMovies(list: List<Movie>) = inMemoryCache.saveData(moviesListKey, list)
 }

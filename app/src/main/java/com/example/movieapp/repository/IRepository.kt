@@ -5,4 +5,5 @@ import com.example.movieapp.model.Movie
 interface IRepository {
     fun getMoviesList(): List<Movie>
     fun loadMovies(): List<Movie>
+    fun saveMovies(list: List<Movie>)
 }

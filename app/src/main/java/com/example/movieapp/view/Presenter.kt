@@ -19,7 +19,8 @@ class Presenter(private var repo: IRepository) :
             if (movies.isEmpty()) {
                 view?.showError(message)
                 return
-            }
+            } else
+                repo.saveMovies(movies)
         }
         view?.showMovieList(movies)
     }

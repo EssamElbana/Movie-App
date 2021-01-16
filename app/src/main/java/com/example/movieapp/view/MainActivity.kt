@@ -1,6 +1,8 @@
 package com.example.movieapp.view
 
 import android.os.Bundle
+import android.util.DisplayMetrics
+import android.view.Display
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.FragmentManager
@@ -15,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.roundToInt
 
 
 class MainActivity : AppCompatActivity(), MoviesContract.View {
@@ -34,7 +37,8 @@ class MainActivity : AppCompatActivity(), MoviesContract.View {
             MovieAdapter(onItemClicked = {
                 presenter.onMovieSelected(it)
             })
-        rvMovies.layoutManager = GridLayoutManager(this@MainActivity, 2)
+        val columns = (resources.displayMetrics.widthPixels  / 360)
+        rvMovies.layoutManager = GridLayoutManager(this@MainActivity, columns)
         rvMovies.addItemDecoration(
             DividerItemDecoration(
                 this@MainActivity,
